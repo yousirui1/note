@@ -1,1 +1,38 @@
 
+delect apt-get remove vim-common
+修改下载源
+/etc/apt/source.list
+http://mirrors.aliyun.com/raspbian/raspbian/
+apt-get update
+apt-get install vim
+
+root
+sudo passwd root
+sudo passwd --unlock root
+
+connect wifi
+/etc/network/interface 
+
+auto lo
+iface lo inet loopback
+iface eth0 inet dhcp
+allow-hotplug wlan0
+iface wlan0 inet static
+wpa-ssid 702
+wpa-psk lly702**
+address 192.168.31.2
+netmask 255.255.255.0
+gateway 192.168.31.1
+network 192.168.31.1
+
+iface default inet dhcp
+
+
+tar xzvf /boot/LCD-show
+cd LCD-show
+./LCD-35-show  180 旋转度数
+
+切换HDMI
+./LCD-hdmi
+
+
