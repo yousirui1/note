@@ -1,0 +1,15 @@
+delect apt-get remove vim-common
+修改下载源
+/etc/apt/source.list
+http://mirrors.aliyun.com/raspbian/raspbian/
+apt-get update
+apt-get install vim
+
+connect wifi
+/etc/network/interface 
+
+root
+sudo passwd root
+sudo passwd --unlock root
+
+
