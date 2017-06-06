@@ -35,4 +35,4 @@ cd LCD-show
 切换HDMI
 ./LCD-hdmi
 
-
+usermod -l yousirui pi
