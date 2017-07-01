@@ -23,6 +23,13 @@ set_network 0 psk = "kc20112012"
 set_network 0 key_mgmt WPA-PSK
 select_network 0
 
+or
+sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
+network={
+	ssid="1001"
+	psk="kc20112012"
+	key_mgmt=WPA-PSK
+}
 
 
 connect wifi 2
