@@ -10,7 +10,22 @@ root
 sudo passwd root
 sudo passwd --unlock root
 
-connect wifi
+connect wifi 1
+wpa_supplicant 
+wpa_cli
+
+status
+
+list_network
+add_network = add a network
+set_network 0 ssid = "1001"
+set_network 0 psk = "kc20112012"
+set_network 0 key_mgmt WPA-PSK
+select_network 0
+
+
+
+connect wifi 2
 /etc/network/interface 
 
 auto lo
