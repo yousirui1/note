@@ -1,5 +1,6 @@
 git
  ssh-keygen -t rsa -C "yousirui1@163.com"
+ git config --global user.email "yousirui1@163.com"
  git init
  git add 
  git commit -m "messge"
