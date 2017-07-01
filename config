@@ -36,3 +36,14 @@ cd LCD-show
 ./LCD-hdmi
 
 usermod -l yousirui pi
+
+小米开启sftp
+
+打开读写权限
+mount -o remount,rw / 
+
+cd /data
+wget 
+http://downloads.openwrt.org.cn/PandoraBox/ralink/packages/packages/openssh-sftp-server_6.6p1-1_ralink.ipk
+tar zxvf o
+tar zxvf date.tar.gz -C /
