@@ -52,7 +52,7 @@ exclude="(symvers|depend|cmd|xtt|map|ko|o|lib|svn-base|d|mod|yin)"
 if [[ $defineOnly == 1 ]]
 then
 	echo "defined only"
-	reg="$value.\(\w+[\*]*s[\*]*\w+[,)]"
+	reg="$value\(\w+[\*]*\s[\*]*\w+[,)]"
 	time find . -path '*.svn' -prune -o -regextype posix-extended ! -regex ".*\.$exclude" -type f -print0 | xargs  -0 -P 0 grep -n -w "$value" | grep -E $reg
 else
 	echo "search all"
