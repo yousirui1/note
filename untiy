@@ -1,0 +1,280 @@
+//刚体速度设置
+rigidbody .velocity
+
+//渲染器.材质.颜色
+oldcolor=renderer.material.color;
+
+//旋转
+transform.Rotate(0,180*Time.deltaTime,0);
+
+//周围旋转
+transform.RotateAround(cy.position,Vector3.up,100*Time.deltaTime);
+
+//上下移动
+transform.Translate(0, -speed*Time.deltaTime, 0); 
+
+
+
+//GUI菜单
+function mydowin1(){
+        //GUI布局.标签
+		GUILayout.Label ("","mylabel2");
+		//开始水平组
+        GUILayout.BeginHorizontal();
+        //工具栏
+		n1=GUILayout.Toolbar(n1,answer);
+        //结束水平组
+		GUILayout.EndHorizontal();
+		//窗口坐标
+	    GUI.DragWindow( Rect(0,0,1000,1000));	
+}
+
+//忽略碰撞
+Physics.IgnoreCollision( transform.root.collider,newcoconut.collider,true);	
+
+
+
+//Updat是在每次渲染新的一帧的时候才会调用
+FixedUpdate，是在固定的时间间隔执行，不受游戏帧率（fps）的影响
+FixedUpdate的时间间隔可以在项目设置中更改，Edit->Project Setting->time 找到Fixed timestep。就可以修改了
+
+
+//调用其他物体上的脚本函数
+gameObject.Find("wenzi").GetComponent(GUIText).text="累加结果是："+m;、
+
+//鼠标进入
+function OnMouseOver(){
+}
+function OnMouseExit(){
+}
+function OnMouseDown(){
+    audio.Pause();  //音乐暂停
+}
+
+//亮度调节
+function Start () {
+		thelight=GameObject.Find("Spotlight1");
+		thetxt=GameObject.FindWithTag("txt");
+		theCube1=GameObject.Find("Cube1");
+}
+function Update () {
+		if(Input.GetKey(KeyCode.L)){thelight.light.intensity+=0.01;
+			thetxt.guiText.text="当前亮度："+thelight.light.intensity;
+		}
+		if(Input.GetKey(KeyCode.K)){thelight.light.intensity-=0.01;
+			thetxt.GetComponent(GUIText).text="当前亮度："+thelight.light.intensity;
+		}
+		
+		if(Input.GetKey(KeyCode.S)){theCube1.SendMessage("Start");
+			
+		}
+}
+
+
+//固定时间刷新不受fps的影响
+function FixedUpdate(){
+		if (grounded){
+			movedirection=Vector3(Input.GetAxis("Horizontal"),0,Input.GetAxis("Vertical"));
+			movedirection=transform.TransformDirection(movedirection);
+			movedirection*=speed ;
+			if(Input.GetButton("Jump")){
+				movedirection.y=jumpspeed;			
+			}	
+		}
+		movedirection.y -= gravity*Time.deltaTime;	
+		var controller:CharacterController=GetComponent(CharacterController);
+		//移动命令
+		
+		var flags=controller.Move(movedirection*Time.deltaTime);
+		//CollisionFlags.CollidedBelow    底部发生了碰撞“flags & CollisionFlags.CollidedBelow”返回1
+		//CollisionFlags.CollidedNone   没发生碰撞“flags & CollisionFlags.CollidedNone”返回1
+		//CollisionFlags.CollidedSides    四周发生了碰撞“flags & CollisionFlags.CollidedSides”返回1
+		//CollisionFlags.CollidedAbove   顶端发生了碰撞“flags & CollisionFlags.CollidedAbove”返回1
+		// 单个& 表示比较两个二进制数值
+		//位掩码技术
+		grounded=(flags & CollisionFlags.CollidedBelow)!=0;  
+				
+}
+
+@script RequireComponent(CharacterController)
+
+//碰撞检测函数
+ function OnControllerColliderHit(hit:ControllerColliderHit){
+ 	 if(hit.gameObject.name!="Plane")
+  }
+function OnTriggerEnter(col:Collider){}
+
+//光线投射
+Physics.Raycast(transform.position,transform.forward,hit,10)
+
+function OnTriggerEnter(col:Collider){
+function OnTriggerEnter(col:Collider){
+		if(col.gameObject.tag=="Player"){
+				transform.FindChild("door").SendMessage("doorcheck");
+
+//检测角色控制器与其他碰撞器碰撞的专用函数	
+function  OnControllerColliderHit(hit:ControllerColliderHit){
+//判断与角色控制器碰撞的物体的标签名
+	if(hit.gameObject.tag=="playerDoor" && doorisopen==false){
+		currentdoor=hit.gameObject;
+		door(true,door_open_sound,"dooropen",currentdoor);
+	}
+		
+//运行一次动画	Thisdoor.audio.PlayOneShot(a_clip);
+
+//运行父物体上的动画
+thisdoor.transform.parent.animation.Play(anim_name);
+
+		
+var controller:CharacterController=GetComponent(CharacterController);
+		//移动命令
+		
+		var flags=controller.Move(movedirection*Time.deltaTime);
+		//CollisionFlags.CollidedBelow    底部发生了碰撞“flags & CollisionFlags.CollidedBelow”返回1
+		//CollisionFlags.CollidedNone   没发生碰撞“flags & CollisionFlags.CollidedNone”返回1
+		//CollisionFlags.CollidedSides    四周发生了碰撞“flags & CollisionFlags.CollidedSides”返回1
+		//CollisionFlags.CollidedAbove   顶端发生了碰撞“flags & CollisionFlags.CollidedAbove”返回1
+		// 单个& 表示比较两个二进制数值
+		//位掩码技术
+		grounded=(flags & CollisionFlags.CollidedBelow)!=0;  
+				
+}
+@script RequireComponent(CharacterController)
+
+
+
+
+
+
+
+var collectSound:AudioClip;
+//电池图片数组与引用变量
+var textures:Texture2D[];
+var powergui_bl:GUITexture;
+//仪表盘主材质纹理数组与引用变量
+var main_texture:Texture2D[];
+var chargemeter_bl:Renderer;
+
+	 
+
+    
+	 	 	 
+function Start () {
+	charge=0;
+}
+//收集能量源函数
+function cellpickup(){
+	//播放“收集音频”
+	AudioSource.PlayClipAtPoint(collectSound,transform.position);
+	//收集计数
+	charge++;
+	//替换GUITexture的texture
+	powergui_bl.texture=textures[charge];
+	//替换Renderer下的material.mainTexture
+	chargemeter_bl.material.mainTexture=main_texture[charge];
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+private var doorisopen:boolean=false;
+private var doortimer:float=0.0;
+
+var door_open_time:float=3.0;
+var door_open_sound:AudioClip;
+var door_shut_sound:AudioClip;
+var wenzi_bl:GUIText;
+var wenzi_timer:float=0.0;
+var win:boolean=false;
+var rect:Rect;
+var rect1:Rect;
+var myguiskin:GUISkin;
+var mywinskin:GUISkin;
+var ture:Texture2D;
+var tog:boolean;
+var text:String="Hello World!";
+var n:int;
+var n1:int;
+var answer:String[]=["答案1","答案2","答案3"];
+var hs:float;
+
+function Start () {
+		rect=Rect(100,50,800,500);
+		rect1=Rect(200,300,600,100);
+
+}
+
+function OnGUI(){
+		GUI.skin=myguiskin;
+		rect=GUI.Window(0,rect,mydowin,"菜单窗口");
+		if(tog){rect1=GUI.Window(1,rect1,mydowin1,"菜单窗口1","mywinskin");}
+		
+		
+}
+
+function mydowin(){
+		GUILayout.BeginHorizontal();
+		if(GUILayout.Button("button")){
+				print("button_ok");
+		
+		}
+
+		GUILayout.Label (ture);
+		tog=GUILayout.Toggle(tog,"toggle");
+		
+		
+		text=GUILayout.TextField(text,50);
+		GUILayout.EndHorizontal();
+		GUILayout.Label (hs.ToString(),"mylabel");
+		hs=GUILayout.HorizontalSlider(hs,0.0,100.0);
+		
+		GUILayout.BeginHorizontal();
+		n=GUILayout.Toolbar(n,answer);
+		GUILayout.Label ("你选择的是：答案"+n,"mylabel");
+		GUILayout.EndHorizontal();
+	GUI.DragWindow( Rect(0,0,1000,1000));	
+}
+
+
+/*物体上下移动
+ * 和选择
+ */
+
+private var isDown :boolean = true;
+private var startPosition : float ;
+
+function Start() {
+    startPosition = transform.position.y;
+}
+
+function Update(){
+    if(isDown){
+        transform.Translate(0, -speed*Time.deltaTime, 0); //上下移动
+        transform.Rotate(0, -speed*Time.deltaTime, 0); //旋转
+    }else{
+        transform.Translate(0, speed*Time.deltaTiem, 0);
+        transform.Rotate(0, speed*Time.deltaTime, 0);
+    }
+    if(transform.position.y - startPosition >0){isDown = true};
+    if(transform.position.y - startPosition < -0.4){isDown = false};
+}
+
+
+
+
+
+
