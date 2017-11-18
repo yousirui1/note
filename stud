@@ -1,0 +1,75 @@
+socket 
+ sockaddr_in sin_family = AF_INET 代表局域网
+ AF_INET=PF_INET 
+ PF = Protocol Family
+ AF = Address Family
+ 
+ 
+ socket()返回的套接字用于监听(listen)和接受(accept)客户端的连接请求
+	ret = socket(AF_INET, SOCK_STREAM, 0);
+ 	SOCK_STREAM  面向连接的SOCKET  TCP
+	SOCK_DGRAM   无连接的SOCKET  局域网广播 UDP
+
+ listen 
+  ret = listen(int sockfd, int backlog); //backlog 应该是允许连接的最大数
+  
+ accept()接受一个客户端的连接请求，并返回一个新的套接字，这个新的套接字用于  
+    和这次连接的客户端之间的通信  只用于服务端。客户端不需要调用所以套接字不变
+	
+ /* 创建socket */
+ server_sock = socket();
+ 
+ /*  绑定监听的ip地址和端口*/
+ bin(server_sock);
+ 
+ /* 开始监听 */
+ listen(server_sock);
+ 
+  /* 等待客户端连接请求，没有客户端连接请求之前
+   * 程序会一直阻塞
+   */
+ client_sock = accept(server_sock);
+
+ /* 已经接受客户端连接请求 accept()函数创建并返回一个新的
+  * 套接字 client_sock ,用于与客户端通信
+  * 如果不再需要接受其他的客户端的连接请求，可以关闭监听
+  * 套接字
+  */
+
+  close(server_sock);
+  
+  /* 发送数据到客户端 */
+  send(client_sock, data);
+ 
+  /* 从客户端接受数据*/
+  recv(client_sock ,data);
+ 
+  close(client_sock);
+  
+c语言
+  字符串 字符串!!拼接  
+  strcpy(str,a); //把字符串a copy to str
+  strcat(str,b); //把字符串b所指定字符串添加到str结尾处(覆盖结尾处的'\0')
+  
+  文件的读写操作 
+  fopen("./date.cfg","r");   //打开文件
+  fopen("./date.cfg","w");	 //创建文件
+  sprintf(aucfg,"xx=%s\n",str); //写入文件时使用把字符串str写入aucfg中
+  fputs(aucfg,pFile);		//把字符串aucfg写入文件
+  
+  获取文件的长度
+  fseek(pFile,0,SEEK_END);   //光标遍历文件至末尾
+  ulFileLen = ftell(pFile);  //获取文件的长度，必须有fseek的操作才能获取
+  rewind(pFile); 			//光标回到文件的开头
+  
+  ulFileLen = fread(pBuf, sizeof(char), ulFileLen, pFile); 
+  pWork = strstr(pBuf,"xxx");
+  sscanf(pWork,"xx=%s\n",&str);
+  
+  字符数组末尾未知的字符\0,空字节，数组的容量比代存储字符串中的字符要多1
+  a[40] 只能存储39个字符最后一位\0结束符 
+
+
+
+
+
