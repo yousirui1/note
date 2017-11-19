@@ -276,5 +276,100 @@ function Update(){
 
 
 
+/*
+ *  网络编程服务器，实现了简单的连接功能指定port 和ip
+ */
+using UnityEngine;
+using System.Collections;
+
+public class network : MonoBehaviour {
+	private string roip="127.0.0.1";
+	private int rport = 10000;
+	private int concount = 15;
+	private bool usenat = false;
+
+	void OnGUI()
+	{
+		switch(Network.peerType)
+		{
+		case NetworkPeerType.Disconnected:
+			StartServer();
+			break;
+		case NetworkPeerType.Server:
+			Onserver();
+			break;
+		case NetworkPeerType.Connecting:
+			break;
+		}
+	}
+	void StartServer(){
+		roip = GUI.TextField (new Rect (10, 30, 100, 20), roip);
+		if (GUI.Button (new Rect (10, 50, 100, 30), "创建服务器")) {
+			Network.incomingPassword="unitynetwork";
+			NetworkConnectionError erro =Network.InitializeServer(concount,rport,usenat);
+			Debug.Log(erro);
+		}
+	}
+
+	void Onserver(){
+		GUILayout.Label ("创建服务器成功！等待连接。。。");
+		string ip = Network.player.ipAddress;
+		int port = Network.player.port;
+		GUILayout.Label ("IP地址" + ip + "\n端口号" + port);
+		int connectlength = Network.connections.Length;
+		for(int i = 0;i<connectlength;i++){
+			GUILayout.Label("连接的IP"+Network.connections[i].ipAddress);
+			GUILayout.Label("连接的端口"+Network.connections[i].port);
+		}
+		if(GUI.Button(new Rect(10,340,100,30),"断开连接")){
+			Network.Disconnect(200);
+		}
+	}
+}
 
 
+/*
+ *客户端程序
+ */
+using UnityEngine;
+using System.Collections;
+
+public class networkclient : MonoBehaviour {
+	private string roip="请输入要连接的IP";
+	private int iport=10000;
+	private bool usenat=false;
+	void OnGUI()
+	{
+		switch(Network.peerType)
+		{
+		case NetworkPeerType.Disconnected:
+			Startconnect();
+			  break;
+		case NetworkPeerType.Client:
+			Clientto();
+			break;
+		case NetworkPeerType.Connecting:
+			Debug.Log("连接中");
+			break;
+		}
+    }
+
+	void Startconnect()
+	{
+		roip = GUILayout.TextField (roip);
+		if (GUILayout.Button ("连接服务器")) {
+			NetworkConnectionError erro=Network.Connect(roip,iport,"unitynetwork");
+			Debug.Log(erro);
+		}
+	}
+
+	void Clientto(){
+		GUILayout.Label ("成功连接到服务器！");
+	}
+
+	void OnConnectedToServer(){
+	foreach(GameObject go in FindObjectsOfType(typeof(GameObject))){
+			go.SendMessage("OnNetworkLoaded",SendMessageOptions.DontRequireReceiver);
+		}
+	}
+}
