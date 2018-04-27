@@ -1,3 +1,50 @@
+用户模板 
+/etc/skel  创建用户后拷贝模板下文件
+
+用户组 
+/etc/group  /etc/gshadow
+
+密码
+/etc/passwd /etc/shadow
+
+用户默认值
+/etc/default/useradd
+INACTIVE=-1 密码过期的宽限天数
+EXPIRE=  密码失效时间
+SKEL=/etc/skel 模板目录
+
+/etc/login.defs 其他用户登陆信息定义
+
+
+shell 批量添加用户
+echo "123" |passwd -stdin user
+-stdin 跟输入的字符串作为密码
+
+chage -d 0 user 
+用户密码有效天数归零，必须修改密码才能登陆
+chown 
+修改文件的所有组
+
+chgrp 
+修改文件的所属组
+
+su - 切换环境变量和用户
+
+/etc/fstab  开机自动挂载文件
+
+acl 单独修改文件的用户权限除开3个组,所有组所属组其他组
+getfacl 
+setfacl -m 设置acl权限
+setfacl -m u:user:rx /home u表示用户g组 -x 删除组合用户 -b 删除所以acl所以
+mask 设置acl的最大有效权限与acl用户相与得到真正的权限
+chown  修改所属组
+
+
+cat -A
+
+dos2unix 
+U  ctrl +R 往后撤销 
+=======
 socket 
  sockaddr_in sin_family = AF_INET 代表局域网
  AF_INET=PF_INET 
@@ -68,8 +115,4 @@ c语言
   
   字符数组末尾未知的字符\0,空字节，数组的容量比代存储字符串中的字符要多1
   a[40] 只能存储39个字符最后一位\0结束符 
-
-
-
-
 
