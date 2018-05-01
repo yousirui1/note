@@ -13,6 +13,52 @@ OK，大功告成
 
 
 
+8086结构
+
+通用16位寄存器
+	15	87	0
+	AX	AH	AL	累加器(Accumulator)
+	BX	BH	BL	基地址寄存器(Basr)
+	CX	CH	CL	计数器(Count)
+	DX	DH	DL	数据寄存器(Data)
+
+指针和变址寄存器
+	15		0
+	SP			堆栈指针寄存器(Stack Pointer)
+	BP			基址指针寄存器(Base Pointer)
+	SI			源变址寄存器(Source Index)
+	DI			目的变址寄存器(Destination Index)
+
+段寄存器
+	15		0
+	CS			代码段寄存器(Code Segment)
+	DS			数据段寄存器(Data Segment)
+	SS			堆栈段寄存器(Stack Segment)
+	ES			附加段寄存器(Extra Segment)
+
+指令指针和标志位寄存器
+	15		0
+	IP			指令指针寄存器(Instruction Pointer) 偏移地址
+	PSW			标志位寄存 ODITSZAPC 
+
+16位寻址20位地址位
+16位寄存器先向左偏移4位即16进制后加一位0然后加上偏移量
+2000H   + 3AH	偏移4位
+20000H + 3AH = 2003AH
+
+
+
+汇编伪指令		
+	数据定义语句DB,DW,DD 
+	标号赋值语句EQU,=
+	段定义语句SEGMENT...ENDS
+	段分配语句ASSUME
+	过程定义语句PROC...ENDP
+	程序开始结束语句ORG,END
+	群定义语句GROUP
+	结构定义语句STRUC...ENDS
+	记录定义语句RECODE
+
 mov ax,[bx]
 	[]表示间接寻址, bx和[bx]的区别,前者操作数就是bx中存放的数,后者操作数是以bx中存放的数为地址的单元中的数,比如bx中存放的数40F6H, 40F6H、40F7H两个单元中存放的数是22H、23H
 	mov ax,[bx]  ; 2223H传送到ax中
