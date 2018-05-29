@@ -13,5 +13,8 @@ git
  git pull 
  git branch -r -a     -r查看远程分支 -a 查看所以分支 
 
+ git fetch --all       下载远程库不做任何合并
+ git reset --hard origin/master 回到版本最初，放弃任何本地修改
+
 
 grep -l 'a' * >>log.txt 把当前目录下的包含a的文件名输出到log.txt

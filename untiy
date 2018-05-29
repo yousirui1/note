@@ -5,6 +5,123 @@
 *Describe: 动态载入效果
 **************************************/
 
+i/o文件操作
+
+using (StringReader sr = new StringReader(txtFile.text))
+{
+	string line;		
+	while(null != (linue = sr.ReadLine()))
+	{
+		//去掉字符串左侧和右侧的空格
+		line = line.Trim();
+		if(line.Length <= 0 || line.StartsWith("#")
+		{
+			continue;
+		}	
+
+		//查找字符串 失败返回-1
+		int idx = line.IndexOf("=");
+	
+		if(-1 !- idx)
+		{
+			//按照长度查找 (beginIndex, endIndex)	
+			string key = line.Substring(0, idx);
+			string value = line.Substring(idx + 1);
+
+			switch(key)
+			{
+				case "verName"
+				{
+	
+				}
+				break;
+			}
+		}
+	}
+}
+int idx = s_externalPath.LastIndexOf("game_Data");  //最后一个开始索引
+(bool)s_externalPath.StartsWith("/");
+(bool)s_externalPath.EndsWith("/");   //判断最后一位是否为'/'
+
+
+
+本地持久数据
+
+string ret = PlayerPrefs.GetString(PREF_NAME + KEY_LAST_MODIFIED, "");
+PlayerPrefs.SetString(PREF_NAME + KEY_LAST_MODIFIED, ifModifiedSince);
+
+
+全局Scance的GameObject
+public static Audio2D create(MainLooper looper, AudioCache audioCache)
+{
+	GameObject go = new GameObject("audio");
+	MonoBehaviour.DontDestroyOnLoad(go);		//场景跳转时，保留游戏对象
+	Audio2D a2d = go.AddComponent<Audio2D>();
+	a2d.setup(looper, audioCache);
+
+	return a2d;
+}
+
+
+手机端文件路径
+Android 获取文件夹读写权限时 可以对根目录进行读写
+s_externalPath= "/sdcard/fsdzz/";
+没有读写权限的话
+//ios 和Android 都可以使用 沙盒内存，不可见
+s_externalPath = Application.persistentDataPath;  
+//win 和编辑器中
+s_externalPath = Application.dataPath;
+
+
+HashSet:
+	HashSet实现了Set接口，不允许集合中出现重复元素 仅储存对象
+HashMap:
+	HashMap实现了Map接口，Map接口对键值对进行映射, Map中不允许出现重复的键(Key)
+
+HashSet就是限制了功能的HashMap 	
+
+
+加载资源
+Resouces.Load();
+Resouces.UnloadUnusedAssets();
+Resouces.LoadAsync();   //异步加载   type 可以装载任意类型
+Resouces.LoadAll();		//加载Resouces文件夹中的path文件夹或者文件夹中的所有资源 type 类型过滤
+
+System.GC.Collect();  //强制对所有迭代垃圾进行回收
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \\rtx\soft\游戏部\开发组\_apk\法师大作战
 
