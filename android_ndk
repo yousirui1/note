@@ -6,12 +6,15 @@ gradle.properties
   设置运行ndk
 
 app/build.gradle
+ defaultConfig{
   ndk{
        moduleName "Ndklib"    //编译生成库
        ldLibs "log","z","m"
        abiFilters "armeabi","armeabi-v7a","x86"  //支持cpu型号
+    }
   }
   
+  android{
    sourceSets {
         main {
             jniLibs.srcDirs = ['libs']  //引用编译好的.so
@@ -19,6 +22,13 @@ app/build.gradle
             // jniLibs.srcDir 'libs'
         }
     }
+    
+    externalNativeBuild{      
+        ndkBuild{
+            path 'src/main/jni/Android.mk'  //本地编译
+        }
+    }
+   }
     
  app/src/jni
   Android.mk
