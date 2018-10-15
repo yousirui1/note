@@ -1,0 +1,44 @@
+local.properties
+  ndk路径 c\:\ndk-bundle
+  
+gradle.properties
+  android.useDeprecatedNdk=true
+  设置运行ndk
+
+app/build.gradle
+  ndk{
+       moduleName "Ndklib"    //编译生成库
+       ldLibs "log","z","m"
+       abiFilters "armeabi","armeabi-v7a","x86"  //支持cpu型号
+  }
+  
+   sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']  //引用编译好的.so
+            // 如果是单个文件夹 可以直接这样如下配置
+            // jniLibs.srcDir 'libs'
+        }
+    }
+    
+ app/src/jni
+  Android.mk
+  Application.mk
+  *.h *.c
+  
+  用终端cd到jni路径 ndk-build 外部生成.so
+  
+ app/src/*Ndk.java
+    public class NdkUtil {
+    static {
+        System.loadLibrary("Ndklib");   //载入lib
+    }
+    //public static native double getCmpPicValue(String file1,String file2);
+
+    public static native int getCmpPic();  //对外函数调用
+
+  }
+  
+  根据ndk.java 对外函数生成*.h 文件  
+  javah -jni com.app.gk.ysr.rtsp.util.NdkUtil   //NdkUtil.java生成
+  
+    
