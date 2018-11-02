@@ -1,0 +1,765 @@
+#if 0
+TCP连接模式下解析RTP包过程记录
+
+
+前提：例程以接收H264 RTP包为基础
+
+
+一、h264基础概念
+
+1.NAL、Slice与frame意思及相互关系
+
+1 frame（帧）的数据可以分为多个slice（片）. 
+每个slice中的数据，在帧内预测只用到自己slice的数据， 与其他slice 数据没有依赖关系。 
+NAL 是用来将编码的数据进行打包的。 比如，每一个slice 数据可以放在NAL 包中。 
+I frame 是自己独立编码，不依赖于其他frame 数据。 
+P frame 依赖 I frame 数据。 
+B frame 依赖 I frame, P frame 或其他 B frame 数据。
+
+
+一个frame是可以分割成多个Slice来编码的，而一个Slice编码之后被打包进一个NAL单元，不过NAL单元除了容纳Slice编码的码流外，还可以容纳其他数据，比如序列参数集SPS。
+
+NAL指网络提取层，里面放一些与网络相关的信息 
+Slice是片的意思，264中把图像分成一帧（frame）或两场（field），而帧又可以分成一个或几个片（Slilce）；片由宏块（MB）组成。宏块是编码处理的基本单元。
+
+2、NAL nal_unit_type中的1（非IDR图像的编码条带）、2（编码条带数据分割块A）、3（编码条带数据分割块B）、4（编码条带数据分割块C）、5（IDR图像的编码条带）种类型 
+与 Slice种的三种编码模式：I_slice、P_slice、B_slice 
+NAL nal_unit_type 里的五种类型，代表接下来数据是表示啥信息的和具体如何分块。 
+I_slice、P_slice、B_slice 表示I类型的片、P类型的片，B类型的片.其中I_slice为帧内预测模式编码；P_slice为单向预测编码或帧内模式；B_slice 中为双向预测或帧内模式。
+
+3、还有frame的3种类型：I frame、P frame、 B frame之间有什么映射关系么？ 
+I frame、P frame、 B frame关系同 I_slice、P_slice、B_slice，slice和frame区别在问题1中已经讲明白。
+
+4、最后，NAL nal_unit_type中的6（SEI）、7（SPS）、8（PPS）属于什么帧呢？ 
+NAL nal_unit_type 为序列参数集（SPS）、图像参数集（PPS）、增强信息（SEI）不属于啥帧的概念。表示后面的数据信息为序列参数集（SPS）、图像参数集（PPS）、增强信息（SEI）。
+
+二. h264 rtp 封包详解
+1.网络抽象层单元类型 (NALU)
+ +---------------+
+  |0|1|2|3|4|5|6|7|
+  +-+-+-+-+-+-+-+-+
+  |F|NRI|  Type   |
+  +---------------+
+
+F: 1 个比特. 
+forbidden_zero_bit. 在 H.264 规范中规定了这一位必须为 0.
+
+NRI: 2 个比特. 
+nal_ref_idc. 取 00 ~ 11, 似乎指示这个 NALU 的重要性, 如 00 的 NALU 解码器可以丢弃它而不影响图像的回放. 不过一般情况下不太关心
+
+这个属性.
+
+Type: 5 个比特. 
+nal_unit_type. 这个 NALU 单元的类型. 简述如下:
+
+0 没有定义 
+1-23 NAL单元 单个 NAL 单元包. 
+24 STAP-A 单一时间的组合包 
+25 STAP-B 单一时间的组合包 
+26 MTAP16 多个时间的组合包 
+27 MTAP24 多个时间的组合包 
+28 FU-A 分片的单元 
+29 FU-B 分片的单元 
+30-31 没有定义
+
+
+
+1.打包模式
+
+下面是 RFC 3550 中规定的 RTP 头的结构.
+
+0 1 2 3 
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|V=2|P|X| CC |M| PT | sequence number | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+| timestamp | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+| synchronization source (SSRC) identifier | 
++=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+ 
+| contributing source (CSRC) identifiers | 
+| …. | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+版本(V):2比特此域定义了RTP的版本.此协议定义的版本是2.
+
+填充位(P):1比特若填充位比特被设置,此包包含一到多个附加在末端的填充比特,不是负载的一部分.填充位的最后一个字节包含可以忽略多少个填充比特.
+填充位可能用于某些具有固定长度的加密算法,或者在底层数据单元中传输多个RTP包.
+
+扩展(X):1比特 若设置扩展比特,固定头(仅)后面跟随一个头扩展.
+
+CSRC计数(CC):4比特 CSRC计数包含了跟在固定头后面CSRC识别符的数目.
+
+标志(M):1比特 标志的解释由具体协议规定.它用来允许在比特流中标记重要的事件,如帧范围.规定该标志在静音后的第一个语音包时置位.
+
+负载类型(PT):7比特 此域定义了负载的格式,由具体应用决定其解释.协议可以规定负载类型码和负载格式之间一个默认的匹配.其他的负载类型码可以通过非RTP方法动态定义.
+RTP发射机在任意给定时间发出一个单独的RTP负载类型;此域不用来复用不同的媒体流.
+
+序列号（sequence number）:16比特 每发送一个RTP数据包,序列号加一,接收机可以据此检测包损和重建包序列.序列号的初始值是随机的(不可预测),以使即便在源本身不加密时
+(有时包要通过翻译器,它会这样做),对加密算法泛知的普通文本攻击也会更加困难.
+
+时间标志（timestamp）:32比特 时间标志反映了RTP数据包中第一个比特的抽样瞬间.抽样瞬间必须由随时间单调和线形增长的时钟得到,以进行同步和抖动计算.时钟的分辨率必须满足要求的同步准确度,
+足以进行包到达抖动测量.时钟频率与作为负载传输的数据格式独立,在协议中或定义此格式的负载类型说明中静态定义,也可以在通过非RTP方法定义的负载格式中动态说明.若RTP包周期性生成,可以使用
+由抽样时钟确定的额定抽样瞬间,而不是读系统时钟.例如,对于固定速率语音,时间标志钟可以每个抽样周期加1.若语音设备从输入设备读取覆盖160个抽样周期的数据块,对于每个这样的数据块,时间标志
+增加160,无论此块被发送还是被静音压缩. 时间标志的起始值是随机的,如同序列号.多个连续的RTP包可能由同样的时间标志,若他们在逻辑上同时产生.如属于同一个图象帧.若数据没有按照抽样的 顺序发送,
+连续的RTP包可以包含不单调的时间标志,如MPEG交织图象帧.
+
+同步源（SSRC）:32比特 SSRC域用以识别同步源.标识符被随机生成,以使在同一个RTP会话期中没有任何两个同步源有相同的SSRC识别符.尽管多个源选择同一个SSRC识别符的概率很低,所有RTP实现工具都必
+须准备检测和解决冲突.若一个源改变本身的源传输地址,必须选择新的SSRC识别符,以避免被当作一个环路源.
+
+有贡献源（CSRC）列表:0到15项,每项32比特 CSRC列表识别在此包中负载的有贡献源.识别符的数目在CC域中给定.若有贡献源多于15个,仅识别15个.CSRC识别符由混合器插入,用有贡献源的SSRC识别符.例如
+语音包,混合产生新包的所有源的SSRC标识符都被陈列,以期在接收机处正确指示交谈者.
+
+注意：前12个字节出现在每个RTP包中,仅仅在被混合器插入时,才出现CSRC识别符列表.
+负载类型 Payload type (PT): 7 bits 
+序列号 Sequence number (SN): 16 bits 
+时间戳 Timestamp: 32 bits
+
+H.264 Payload 格式定义了三种不同的基本的负载(Payload)结构. 接收端可能通过 RTP Payload 
+的第一个字节来识别它们. 这一个字节类似 NALU 头的格式, 而这个头结构的 NAL 单元类型字段 
+则指出了代表的是哪一种结构,
+
+这个字节的结构如下, 可以看出它和 H.264 的 NALU 头结构是一样的. 
++———————————————+ 
+|0|1|2|3|4|5|6|7| 
++-+-+-+-+-+-+-+-+ 
+|F|NRI| Type | 
++———————————————+ 
+
+字段 Type: 这个 RTP payload 中 NAL 单元的类型. 这个字段和 H.264 中类型字段的区别是, 当 type 
+的值为 24 ~ 31 表示这是一个特别格式的 NAL 单元, 而 H.264 中, 只取 1~23 是有效的值.
+
+24 STAP-A 单一时间的组合包 
+25 STAP-B 单一时间的组合包 
+26 MTAP16 多个时间的组合包 
+27 MTAP24 多个时间的组合包 
+28 FU-A 分片的单元 
+29 FU-B 分片的单元 
+30-31 没有定义
+
+可能的结构类型分别有:
+
+1.单一 NAL 单元模式 
+即一个 RTP 包仅由一个完整的 NALU 组成. 这种情况下 RTP NAL 头类型字段和原始的 H.264的 
+NALU 头类型字段是一样的.
+
+2.组合封包模式 
+即可能是由多个 NAL 单元组成一个 RTP 包. 分别有4种组合方式: STAP-A, STAP-B, MTAP16, MTAP24. 
+那么这里的类型值分别是 24, 25, 26 以及 27.
+
+3.分片封包模式 
+用于把一个 NALU 单元封装成多个 RTP 包. 存在两种类型 FU-A 和 FU-B. 类型值分别是 28 和 29.
+
+2.1 单一 NAL 单元模式
+
+对于 NALU 的长度小于 MTU 大小的包, 一般采用单一 NAL 单元模式. 
+对于一个原始的 H.264 NALU 单元常由 [Start Code] [NALU Header] [NALU Payload] 三部分组成, 其中 Start Code 用于标示这是一个
+
+NALU 单元的开始, 必须是 “00 00 00 01” 或 “00 00 01”, NALU 头仅一个字节, 其后都是 NALU 单元内容. 只有当NALU单元和一帧的开始重合时是“00 00 00 01”
+打包时去除 “00 00 01” 或 “00 00 00 01” 的开始码, 把其他数据封包的 RTP 包即可.
+
+   0               1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |F|NRI|  type   |                                               |
+  +-+-+-+-+-+-+-+-+                                               |
+  |                                                               |
+  |               Bytes 2..n of a Single NAL unit                 |
+  |                                                               |
+  |                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                               :...OPTIONAL RTP padding        |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+如有一个 H.264 的 NALU 是这样的:
+
+[00 00 00 01 67 42 A0 1E 23 56 0E 2F … ]
+
+这是一个序列参数集 NAL 单元. [00 00 00 01] 是四个字节的开始码, 67 是 NALU 头, 42 开始的数据是 NALU 内容.
+
+封装成 RTP 包将如下:
+
+[ RTP Header ] [ 67 42 A0 1E 23 56 0E 2F ]
+
+即只要去掉 4 个字节的开始码就可以了. 
+
+2.2 组合封包模式
+
+其次, 当 NALU 的长度特别小时, 可以把几个 NALU 单元封在一个 RTP 包中.
+
+   0               1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                          RTP Header                           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |STAP-A NAL HDR |         NALU 1 Size           | NALU 1 HDR    |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                         NALU 1 Data                           |
+  :                                                               :
+  +               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |               | NALU 2 Size                   | NALU 2 HDR    |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                         NALU 2 Data                           |
+  :                                                               :
+  |                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                               :...OPTIONAL RTP padding        |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+2.3 Fragmentation Units (FUs).
+
+而当 NALU 的长度超过 MTU 时, 就必须对 NALU 单元进行分片封包. 也称为 Fragmentation Units (FUs).
+   0               1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  | FU indicator  |   FU header   |                               |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
+  |                                                               |
+  |                         FU payload                            |
+  |                                                               |
+  |                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                               :...OPTIONAL RTP padding        |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+  Figure 14.  RTP payload format for FU-A
+
+
+The FU indicator octet has the following format:
+
+  +---------------+
+  |0|1|2|3|4|5|6|7|
+  +-+-+-+-+-+-+-+-+
+  |F|NRI|  Type   |
+  +---------------+
+
+The FU header has the following format:
+
+  +---------------+
+  |0|1|2|3|4|5|6|7|
+  +-+-+-+-+-+-+-+-+
+  |S|E|R|  Type   |
+  +---------------+
+
+3.SDP 参数
+下面描述了如何在 SDP 中表示一个 H.264 流:
+
+. “m=” 行中的媒体名必须是 “video” 
+. “a=rtpmap” 行中的编码名称必须是 “H264”. 
+. “a=rtpmap” 行中的时钟频率必须是 90000. 
+. 其他参数都包括在 “a=fmtp” 行中.
+
+如:
+
+m=video 49170 RTP/AVP 98 
+a=rtpmap:98 H264/90000 
+a=fmtp:98 profile-level-id=42A01E; sprop-parameter-sets=Z0IACpZTBYmI,aMljiA==
+
+下面介绍一些常用的参数.
+
+3.1 packetization-mode: 
+表示支持的封包模式. 
+当 packetization-mode 的值为 0 时或不存在时, 必须使用单一 NALU 单元模式. 
+当 packetization-mode 的值为 1 时必须使用非交错(non-interleaved)封包模式. 
+当 packetization-mode 的值为 2 时必须使用交错(interleaved)封包模式. 
+这个参数不可以取其他的值.
+
+3.2 sprop-parameter-sets: 
+这个参数可以用于传输 H.264 的序列参数集和图像参数 NAL 单元. 这个参数的值采用 Base64 进行编码. 不同的参数集间用”,”号隔开.
+
+3.3 profile-level-id: 
+这个参数用于指示 H.264 流的 profile 类型和级别. 由 Base16(十六进制) 表示的 3 个字节. 第一个字节表示 H.264 的 Profile 类型, 第
+
+三个字节表示 H.264 的 Profile 级别:
+
+3.4 max-mbps: 
+这个参数的值是一个整型, 指出了每一秒最大的宏块处理速度.
+
+
+
+二、组包--与封包相反
+
+根据抓包实测，在TCP模式下收到的TCP包前四个字节如下：
+   0               1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |       Magic    |      Channel      |         Length           |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+--+-+-+-+-+-+-+-+-+-+-+-+-+-+-+|
+
+  Magic:魔数 :0x24
+  Channel:偶数:RTP 奇数其他，一般是RTCP
+  Length：本次包的长度
+  我们将这些关键字节当作过滤标准，此次历程只是单纯的接收RTP 视频包
+
+  由于TCP存在粘包的问题，所以可根据长度进行拆解
+
+  关于粘包问题可参考：https://www.cnblogs.com/kex1n/p/6502002.html
+
+  大致步骤为：
+                                         收到包
+                                           |
+                                          \|/
+           不符合的直接丢掉-----------符合过滤条件
+                                          \|/
+        去掉12字节的RTPHeader，获得NaluHeader，根据NaluHeader中的Type进行判断当前Nalu类型
+                                          \|/                           
+                                  --------------------
+                                  |                  |
+                                  |                  | 
+                                 \|/                \|/
+                            1~23属于单包       28属于分片的
+                                  |                  |
+                                  |                  |
+                                 \|/                \|/
+                            写入H264_Header        判断是不是一帧的开始，可根据FU Header 的S 判断，等于1代表开始，如果是开始，则写入H264_Header以及将FU indicator 和 FU header这两个字节转换成一个字节，其实就是将FU Header去掉，但要保留FU Header的Type替换FU indicator中的Type，原因是FU Header本身就是因为分片的时候加上的，具体方法可以使用：((FU indicator)&0xe0) | ((FU Header)&0x1f)
+                                  |                  |
+                                  |                  |
+                                  |                  |
+                                 \|/                \|/
+            直接将nalu和数据写入文件              不是开始则代表是数据，直接跳过FU indicator 和 FU header这两个字节将数据写入即可
+
+
+
+注意：
+     1.分片重组的时候，一定要记得去掉FU header，并将FU indicator 的后5位换成相应的H264的帧类型
+     2.在封包的时候会将Nalu的区分标志“00 00 00 01” 或者 “00 00 01”去掉，在解包的时候要手动加上
+
+
+本次实验代码：
+#endif
+
+#include<stdio.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<arpa/inet.h>
+#include<assert.h>
+#include<string.h>
+#include<errno.h>
+#include<netdb.h>
+#include<assert.h>
+#include<sys/types.h>
+#include<fcntl.h>
+#include<unistd.h>
+#include<stdlib.h>
+
+
+#define HP_MAX_LEN 40960
+int fd;
+
+/*RTSP 请求数据包*/
+struct rtsp_pack{
+
+    unsigned char buff[HP_MAX_LEN];
+    int pos;
+};
+
+/*丢包函数*/
+void drop_packg(int sfd, int length)
+{
+    int ret = 0;
+    char buff[40960];
+    int lengthh = 0;
+
+    ret = recv(sfd, buff, length, 0);
+    if (ret == length)
+    {
+        return;
+    }
+
+    lengthh = length - ret;
+
+    while(lengthh > 0)
+    {
+        printf("adfasdfasdfadf\n");
+        ret = recv(sfd, buff, lengthh, 0);
+        lengthh = lengthh - ret;
+    }
+    return ;
+}
+typedef struct rtp_header
+{
+#ifdef ORTP_BIGENDIAN
+    uint16_t version:2;
+    uint16_t padbit:1;
+    uint16_t extbit:1;
+    uint16_t cc:4;
+    uint16_t markbit:1;
+    uint16_t paytype:7;
+#else
+    uint16_t cc:4;
+    uint16_t extbit:1;
+    uint16_t padbit:1;
+    uint16_t version:2;
+    uint16_t paytype:7;
+    uint16_t markbit:1;
+#endif                                  
+    uint16_t seq_number;
+    uint32_t timestamp;
+    uint32_t ssrc;
+    uint32_t csrc[16];
+} rtp_header_t;
+
+/*TCP 数据包头*/
+typedef struct 
+{
+    unsigned char magic;
+    unsigned char channel;
+    unsigned short length;
+}ST_Magic;
+
+
+/*RTP Header*/
+typedef struct 
+{
+    /* byte 0 */
+    unsigned char csrc_len:4;  /* CC expect 0 */
+    unsigned char extension:1; /* X  expect 1, see RTP_OP below */
+    unsigned char padding:1;   /* P  expect 0 */
+    unsigned char version:2;   /* V  expect 2 */
+
+    /* byte 1 */
+    unsigned char payload:7;   /* PT  RTP_PAYLOAD_RTSP */
+    unsigned char marker:1;    /* M   expect 1 */
+
+    /* byte 2,3 */
+    unsigned short seq_no;     /*sequence number*/
+
+    /* byte 4-7 */
+    unsigned  long timestamp;  /*time stamp*/
+
+    /* byte 8-11 */
+    unsigned long ssrc;        /* stream number is used here. */
+} RTPHeader;/*12 bytes*/
+
+/*NaluHeader*/
+typedef struct{
+
+    unsigned char Type:5;
+    unsigned char NRI:2;
+    unsigned char F:1;
+}NaluHeader;
+
+/*FU_indicator + FU_Header*/
+typedef struct{
+    unsigned char Type:5;
+    unsigned char NRI:2;
+    unsigned char F:1;
+    unsigned char fuType:5;
+    unsigned char R:1;
+    unsigned char E:1;
+    unsigned char S:1;
+}FuNaluHeader;
+
+
+
+int rtsp_addline( struct rtsp_pack *hp,char *newline ){
+
+    int current_pos = hp->pos;
+    int newline_len = strlen(newline);
+
+    if( current_pos + newline_len + 2 >= HP_MAX_LEN )
+        return -1;
+    if( (current_pos <= 4) && (current_pos != 0) )
+        return -1;
+
+    if( hp->pos == 0 ){
+        memcpy( hp->buff,newline,newline_len );
+    }else{
+        current_pos -= 2;
+        memcpy( hp->buff + current_pos,newline,newline_len );
+    }
+
+    current_pos += newline_len;
+    memcpy( hp->buff + current_pos,"\r\n\r\n",4 );
+    current_pos += 4;
+
+    hp->pos = current_pos;
+    return 0;
+}
+
+
+int next[32];
+void match_pre( char *pattern,int *next,int pattern_len ){
+
+    int matched = 0;
+    int begin = 1;
+
+    next[0] = 0;
+    while( begin + matched < pattern_len ){
+        if( pattern[begin + matched ] == pattern[matched] ){
+            matched++;
+            next[begin + matched - 1] = matched;
+        }else{
+            if( matched == 0 ){
+                begin++;
+            }else{
+                begin += matched - next[ matched - 1];
+                matched = next[ matched - 1];
+            }
+        }
+    }
+    return;
+}
+int match( char *str,char *pattern,int *len ){
+
+    int pattern_len = strlen( pattern );
+    int str_len = strlen(str);
+
+    int matched = 0;
+    int begin = 0;
+    char *p = NULL;
+
+    if( pattern_len > 32 )
+        return -1;
+
+    match_pre( pattern,next,pattern_len );
+
+    while( begin + matched < str_len ){
+        if( pattern[matched] == str[begin + matched] ){
+            matched++;
+            if( matched == pattern_len ){
+                p = str + begin + matched;
+                while( *p != '\r' || *(p + 1) != '\n')
+                    p++;
+                *len = p - (str + begin);
+                return begin;
+            }
+        }else{
+            if( matched == 0 ){
+                begin++;
+            }else{
+                begin += matched - next[ matched - 1];
+                matched = next[ matched - 1];
+            }
+        }
+    }
+    return -1;
+
+}
+
+char *line_match( char *str,char *pattern ){
+    int len;
+    int index = match( str,pattern,&len );
+    if( index == -1 )
+        return NULL;
+
+    char *buff = (char *)malloc( sizeof(char) * len + 1 );
+    memcpy( buff,&str[index],len );
+    buff[len] = '\0';
+
+    return buff;
+}
+
+int main(){
+    struct rtsp_pack rtsp;
+    struct sockaddr_in sa;
+    int sfd = socket(AF_INET,SOCK_STREAM,0);
+    int ret = -1;
+    unsigned char buff[40960];
+    rtsp.pos = 0;
+
+    int size = 0;
+
+    fd = open("./xxx.mpeg", O_WRONLY|O_CREAT);
+    if (-1 == fd)
+    {
+        printf("open file faild\n");
+        return -1;
+    }
+
+    memset(&rtsp, 0, sizeof(struct rtsp_pack));
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(554);
+    sa.sin_addr.s_addr = inet_addr("184.72.239.149");
+
+    ret = connect( sfd,(struct sockaddr *)&sa,sizeof(sa) );
+
+    if( ret < 0 ){
+        printf("connect error,%d\n",errno);
+        return -1;
+    }
+
+    printf("connect success!!!\n");
+
+    /**/
+    rtsp_addline(&rtsp, (char *)"OPTIONS rtsp://184.72.239.149:554/vod/mp4://BigBuckBunny_175k.mov RTSP/1.0");
+    rtsp_addline(&rtsp, (char *)"CSeq: 1");
+    rtsp_addline(&rtsp, (char *)"User-Agent: LibVLC/3.0.2 (LIVE555 Streaming Media v2016.11.28)");
+    rtsp_addline(&rtsp, (char *)"\r\n");
+
+    memset(buff, 0, sizeof(buff));
+    ret = send(sfd, rtsp.buff, rtsp.pos, 0);
+    ret = recv(sfd, buff, 8192, 0);
+    printf("ret = %d\n", ret);
+    printf("%s\n",buff);
+
+
+    memset(&rtsp, 0, sizeof(struct rtsp_pack));
+    memset(buff, 0, sizeof(buff));
+    rtsp_addline(&rtsp, (char *)"DESCRIBE rtsp://184.72.239.149:554/vod/mp4://BigBuckBunny_175k.mov RTSP/1.0");
+    rtsp_addline(&rtsp, (char *)"CSeq: 2");
+    rtsp_addline(&rtsp, (char *)"User-Agent: LibVLC/3.0.2 (LIVE555 Streaming Media v2016.11.28)");
+    rtsp_addline(&rtsp, (char *)"Accept: application/sdp");
+    rtsp_addline(&rtsp, (char *)"\r\n");
+
+    ret = send(sfd, rtsp.buff, rtsp.pos, 0);
+    ret = recv(sfd, buff, 8192, 0);
+    printf("ret = %d\n", ret);
+
+    printf("%s\n", buff);
+
+    char *p = line_match(buff, "Session:");
+    char Session[128];
+    memset(Session, 0, sizeof(Session));
+
+    for( int i = 0; ; i++ ){
+        if( p[i] == ';'){
+            Session[i] = '\0';
+            break;
+        }
+        Session[i] = p[i];
+    }
+    printf("session = %s\n", Session);
+    memset(&rtsp, 0, sizeof(struct rtsp_pack));
+    memset(buff, 0, sizeof(buff));
+
+    rtsp_addline(&rtsp, (char *)"SETUP rtsp://184.72.239.149:554/vod/mp4://BigBuckBunny_175k.mov/trackID=2 RTSP/1.0");
+    rtsp_addline(&rtsp, (char *)"CSeq: 3");
+    rtsp_addline(&rtsp, (char *)"User-Agent: LibVLC/3.0.2 (LIVE555 Streaming Media v2016.11.28)");
+    rtsp_addline(&rtsp, (char *)"Transport: RTP/AVP/TCP;unicast;");
+
+    ret = send(sfd, rtsp.buff, rtsp.pos, 0);
+    ret = recv(sfd, buff, 8192, 0);
+    printf("ret = %d\n", ret);
+
+    printf("%s\n", buff);
+#if 0   
+    memset(&rtsp, 0, sizeof(struct rtsp_pack));
+    memset(buff, 0, sizeof(buff));
+
+    rtsp_addline(&rtsp, (char *)"SETUP rtsp://184.72.239.149:554/vod/mp4://BigBuckBunny_175k.mov/trackID=2 RTSP/1.0");
+    rtsp_addline(&rtsp, (char *)"CSeq: 4");
+    rtsp_addline(&rtsp, (char *)"User-Agent: LibVLC/3.0.2 (LIVE555 Streaming Media v2016.11.28)");
+    rtsp_addline(&rtsp, (char *)"Transport: RTP/AVP/TCP;unicast;");
+    rtsp_addline(&rtsp, Session);
+    rtsp_addline(&rtsp, "\n\r");
+
+    ret = send(sfd, rtsp.buff, rtsp.pos, 0);
+    ret = recv(sfd, buff, 8192, 0);
+    printf("ret = %d\n", ret);
+
+    printf("%s\n", buff);
+#endif
+
+    memset(&rtsp, 0, sizeof(struct rtsp_pack));
+    memset(buff, 0, sizeof(buff));
+
+    rtsp_addline(&rtsp, (char *)"PLAY rtsp://184.72.239.149:554/vod/mp4://BigBuckBunny_175k.mov/ RTSP/1.0");
+    rtsp_addline(&rtsp, (char *)"CSeq: 5");
+    rtsp_addline(&rtsp, (char *)"User-Agent: LibVLC/3.0.2 (LIVE555 Streaming Media v2016.11.28)");
+    rtsp_addline(&rtsp, Session);
+    rtsp_addline(&rtsp, (char *)"Range: npt=0.000-");
+    rtsp_addline(&rtsp, "\n\r");
+
+    ret = send(sfd, rtsp.buff, rtsp.pos, 0);
+    ret = recv(sfd, buff, 8192, 0);
+    printf("ret = %d\n", ret);
+
+    printf("%s\n", buff);
+
+RTPHeader *rtpHeader = NULL;
+ST_Magic *stMagic = NULL;
+char header[5];
+NaluHeader *naluHeader = NULL;
+memset(header, 0, sizeof(header));
+int lengthh = 0;
+char H264_Header[]={0x00, 0x00, 0x00, 0x01};
+/*sps及pps 这里直接使用手动解析出来的*/
+char sps[]={0x67 ,0x42 ,0xc0 ,0x1e ,0xd9 ,0x03 ,0xc5 ,0x68 ,0x40 ,0x00 ,0x00 ,0x03 ,0x00 ,0x40 ,0x00 ,0x00 ,0x0c ,0x03 ,0xc5 ,0x8b ,0x92};
+char pps[]={0x68 ,0xcb ,0x8c ,0xb2};
+int Type;
+int NRI;
+int F;
+char I_SLIC[]={0X65};
+FuNaluHeader * fuNaluHeader = NULL;
+
+write(fd, H264_Header, sizeof(H264_Header));
+write(fd, sps, sizeof(sps));
+write(fd, H264_Header, sizeof(H264_Header));
+write(fd, pps, sizeof(pps));
+
+while(1)
+{
+
+    /*接收4字节，判断这个包的长度，然后再接收相应长度的数据，解决粘包问题*/
+    ret = recv(sfd, header, 4, 0);
+    stMagic = (ST_Magic *)header;
+
+    /*判断魔数，且是RTP包才接收*/
+    if (stMagic->magic == 0x24 && !(stMagic->channel%2))
+    {
+        printf("magic = %d\n", stMagic->magic);
+        printf("channel = %d\n", stMagic->channel);
+        printf("length = %d\n", ntohs(stMagic->length));
+        lengthh = ntohs(stMagic->length);
+
+        printf("lengthh = %d\n", lengthh);
+        /*接收第一包数据*/
+        ret = recv(sfd, buff, lengthh, 0);
+        rtpHeader = (RTPHeader *)buff;
+        printf("RTP packg\n");
+        printf("version = %d\n", rtpHeader->version);
+        printf("padding = %d\n", rtpHeader->padding);
+        printf("extension = %d\n", rtpHeader->extension);
+        printf("csrc_len =  %d\n", rtpHeader->csrc_len);
+        printf("marker = %d\n", rtpHeader->marker);
+        printf("payload = %d\n", rtpHeader->payload);
+        printf("seq_no = %d\n", ntohs(rtpHeader->seq_no));
+        lengthh  = lengthh - ret;
+
+        naluHeader = (NaluHeader *)(buff+12);
+        printf("type = %d\n", naluHeader->Type);
+        printf("NRI = %d\n", naluHeader->NRI);
+        printf("F = %d\n", naluHeader->F);
+        /*判断nalu类型*/
+        if ((naluHeader->Type > 0) && (naluHeader->Type < 25))            //1~23代表单包，如果是单包，直接在前面增加H264_Header（0001）然后将数据写入到文件中
+        {
+            printf("type =================================== naluHeader->Type = %d\n", naluHeader->Type);
+            printf("danbao=====================================================\n");
+            write(fd, H264_Header, sizeof(H264_Header));
+            write(fd, buff+12, ret - 12);
+        }else if (naluHeader->Type == 28)                             //28代表分片，如果是分片则判断是不是一帧的开始，如果是，则增加H264_Header然后将数据写入到文件中，如果不是，则直接将数据写入到文件中
+        {
+            printf("fenbao===============================================================\n");
+            fuNaluHeader = (FuNaluHeader *)(buff+12);
+            printf("fenbao leixing =============================================================== fuType = %d\n", fuNaluHeader->fuType);
+            if (fuNaluHeader->S == 1)   //first slice
+            {
+                printf("fuType = %d\n", fuNaluHeader->fuType);
+                //start
+                write(fd, H264_Header, sizeof(H264_Header));
+                write(fd, I_SLIC, 1);
+            }
+            write(fd, buff+14, ret - 14);
+        }else{
+
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!type = %d\n", naluHeader->Type);
+        }
+        while(lengthh> 0)                                //while 循环则是接收一次没有接收完的包数据
+        {
+            printf("jinru while===============\n");         
+            ret = recv(sfd, buff, lengthh, 0);              
+            write(fd, buff, ret);
+            lengthh -= ret;
+        }
+        printf("\n");
+        memset(buff, 0, sizeof(buff));
+    }else{
+
+        printf("length ===================================================================================############## %d\n", ntohs(stMagic->length));
+        /*丢掉不是RTP的包*/
+        drop_packg(sfd, ntohs(stMagic->length));    
+    }
+}
+close(fd);
+close(sfd);
+return 0;
+}
