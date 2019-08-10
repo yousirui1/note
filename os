@@ -11,6 +11,11 @@
 
 OK，大功告成
 
+通过bximage 生产pm.img 不能挂载的问题
+  先通过bximage 生成pm.img
+  再用freedos.img 启动dos 在dos 格式化pm.img  FORMAT/S A：
+  就能挂载mount -o loop pm.img /mnt/floopy
+
 
 
 8086结构
