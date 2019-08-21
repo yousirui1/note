@@ -1,0 +1,4 @@
+sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev
+
+sudo apt-get install python3-setuptools python-dev
+
