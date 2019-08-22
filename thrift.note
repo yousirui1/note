@@ -2,3 +2,13 @@ sudo apt-get install libboost-dev libboost-test-dev libboost-program-options-dev
 
 sudo apt-get install python3-setuptools python-dev
 
+
+/usr/lib64/libboost_unit_test_framework.a: No such file or directory，
+sudo yum install - y boost-devel-static
+
+boost::shared_ptr<Calculator_server.skeleton.cpp:(.text+0x176): undefined reference to `apache::thrift::server::TSimpleServer::TSimpleServer(boost::shared_ptrapache::thrift::TProcessor const&, boost::shared_ptrapache::thrift::transport::TServerTransport const&, boost::shared_ptrapache::thrift::transport::TTransportFactory const&, boost::shared_ptrapache::thrift::protocol::TProtocolFactory const&)’
+collect2: error: ld returned 1 exit statusapache::thrift::protocol::TProtocolFactory> const&)’
+没有打开c11支持
+-std=c++11
+
+
