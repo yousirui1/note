@@ -12,3 +12,17 @@ collect2: error: ld returned 1 exit statusapache::thrift::protocol::TProtocolFac
 -std=c++11
 
 
+  In Gemfile:
+    bundler (~> 1.11) ruby
+
+yum install curl
+curl -L get.rvm.io | bash -s stable
+rvm install 2.3.4
+rvm use 2.3.4
+
+gem install rake -v 12.3.3
+gem install debug_inspector -v 0.0.3
+
+make[4]: composer: Command not found
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/bin/composer
