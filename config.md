@@ -2,6 +2,16 @@
 ==========================
 ##1.!!! 修改默认英国布局键盘
 -------------------------------
+```
+sudo raspi-config
+```
+1.Configuring keyboard-configuration
+2. 选 Generic 101-key PC  #通用PC键盘101键
+3. 然后选择布局格式 Other
+4. English(US)
+5. English(US, alternative international)
+6. 然后重启
+
 ##2.!!! 配置网网络记得关机 生效!!
 ------------------------------------
 ```
