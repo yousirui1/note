@@ -94,6 +94,18 @@ cat /var/log/auth.log
 ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
 ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
 ```
+## 安装lightdm 图形界面
+-----------
+```
+sudo apt get install lightdm
+#安装完死活循环登录. 。有人说 .Xauthority 权限问题 有人说 /etc/profile .bashrc 各种环境变量错误 都没解决
+# 查看 .xsession-errors  ERROR: no found .xsession file abort 
+
+# 觉得是缺少其他窗口组件
+sudo apt-get install xorg
+sudo apt-get install lxde openbox
+
+```
 
 
 
