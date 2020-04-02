@@ -10,7 +10,7 @@
         source edksetup.sh
         make -C BaseTools -j8
     linux:
-         build -a AI32 -D UNIX_SEC_BUILD -n 8 -t GCC5 -p EmulatorPkg/EmulatorPkg.dsc
+         build -a IA32 -D UNIX_SEC_BUILD -n 8 -t GCC5 -p EmulatorPkg/EmulatorPkg.dsc
          
 
     需要下载UDK2018 版 不然没要Std 库 
