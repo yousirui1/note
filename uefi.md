@@ -21,3 +21,5 @@
         Extract to CryptoPkg\Library\OpensslLib\openssl
     x64编译IA32
         sudo apt-get install libc6-dev-i386
+### build BootX64.efi
+    https://wiki.osdev.org/UEFI_ISO_Bare_Bones#Creating_and_running_the_CD_image
