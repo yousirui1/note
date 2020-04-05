@@ -23,3 +23,6 @@
         sudo apt-get install libc6-dev-i386
 ### build BootX64.efi
     https://wiki.osdev.org/UEFI_ISO_Bare_Bones#Creating_and_running_the_CD_image
+    
+### 启动过程
+    StartImage->_ModuleEntryPoint->ProcessModuleEntryPointList->UefiMain
