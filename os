@@ -120,4 +120,16 @@ dd定义双子类型变量,一个双字数据占4个字节单元,偏移量加4
 
 
 
-
+     curl -H "Content-Type: application/json" http://172.16.1.29:50005/api/v1/voi/terminal/command/ -X POST -d '{
+"cmd": "send_down_torrent",
+"data": {
+        "mac_list": "00:0c:29:75:1b:d0",
+        "disk_uuid": "2ab1a8a0-dc98-4109-b4f4-59000a54fdc4",
+        "disk_type": 1,
+        "sys_type" : 1,
+        "dif_level" : 0,
+        "real_size" : 24,
+        "torrent_file" : "/opt/test.torrent",
+        "reserve_space" : 50
+    }
+}'
