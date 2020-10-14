@@ -1,0 +1,35 @@
+222.246.129.80
+
+yousirui@yzycn.com
+Ysr123456
+
+wifi xinzhixudzrd
+
+
+sudo apt-get install qemu-user-static
+
+sudo tar -cvpzf rootfs.tgz --exclude=/proc --exclude=/mnt --exclude=/sys --exclude=/rootfs.tgz /
+
+
+DNS 222.246.129.80
+
+
+ffmpeg -i D:\Media\IMG_0873.MOV D:\Media\output2.flv
+
+
+Xvnc :0 -desktop X -rfbauth /root/.vnc/passwd
+ /usr/bin/x11vnc -shared -forever -accept /usr/bin/confirmed
+ 
+ Xtightvnc :0 -desktop X -auth /home/ysr/.Xauthority -geometry 1280x720 -depth 16 -rfbwait 120000 -rfbauth /home/ysr/.vnc/passwd -rfbport 5900 -fp /usr/share/fonts/X11/misc/,/usr/share/fonts/X11/Type1/,/usr/share/fonts/X11/75dpi/,/usr/share/fonts/X11/100dpi/ -co /etc/X11/rgb -dpi 75 -httpd /usr/local/vnc/classes
+ 
+ x11vnc -forever -shared -rfbauth ~/.vnc/passwd -display :0
+ 
+ nds  222.246.129.80
+ 
+ xinzhixudzrd
+ 
+ /data/rk29_display.cfg 分辨率
+ 
+ 硬件转码库 没有
+
+%HOMEDRIVE%%HOMEPATH%

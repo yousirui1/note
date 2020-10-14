@@ -1,0 +1,80 @@
+qemu-system-arm -M vexpress-a9 -m 1024M -nographic -net nic -net tap,ifname=tap0,script=no -sd sdcard.ext3 -kernel u-boot
+
+scripts/kconfig/lxdialog/dialog.h:38:20: fatal error: curses.h: No such file or directory
+
+sudo apt-get install libncurses5-dev
+
+busybox 需要静态编译
+
+
+uImage "mkimage" command not found - U-Boot images will not be built
+sudo apt-get install u-boot-tools
+
+setenv ipaddr 192.168.131.100; setenv netmask 255.255.255.0; setenv serverip 192.168.131.129;
+setenv bootargs "console=ttyAMA0 root=/dev/mmcblk0 init=/linuxrc rw rootwait"
+
+tftp 0x60000000 uImage; tftp 0x70000000 device.dtb;fdt addr 0x70000000; bootm 0x60000000 - 0x70000000
+
+setenv bootargs  rw rootfstype=ext3 console=ttySAC0,115200 init=/linuxrc
+
+setenv bootargs root=/dev/sda1 rw rootfstype=ext3 console=ttySAC0,115200 init=/linuxrc mem=1024M mtdparts=armflash:1M@0x800000(uboot),7M@0x1000000(kernel),24M@0x2000000(initrd) mmci.fmax=190000 devtmpfs.mount=0 vmalloc=256M
+
+setenv bootargs initrd=0x42000040,0x800000 root=/dev/ram0 rw rootfstype=ext2 console=ttySAC0,115200 init=/linux
+
+sudo apt-get install flex bison
+make rpi_3_defconfig
+
+CROSS_COMPILE=arm-linux-gnueabihf- make all -j4 
+
+rk3188 uboot
+git clone https://github.com/rockchip-linux/u-boot.git
+
+sudo apt-get install gcc-arm-linux-gnueabi
+
+qemu-kvm 安装失败 glib 没有  A9 不支持kvm 不安装也行
+
+glib zlib 编译
+
+ GLib-WARNING **: /build/glib2.0-7ZsPUq/glib2.0-2.48.2/./glib/gmem.c:483: custom memory allocation vtable not supported
+
+sudo apt-get install libgoogle-perftools-dev libgoogle-perftools4 libtcmalloc-minimal4
+
+
+配置tftp
+sudo apt-get install tftp-hpa tftpd-hpa
+/etc/default/tftpd-hpa
+ sudo service tftpd-hpa restart	 
+TUN 虚拟网络 
+sudo service tftpd-hpa restart
+
+
+Qt4 
+Basic XLib functionality test failed!
+	
+ libx11-dev libxext-dev libxtst-dev cmake 
+
+WebKit Warning: -no-xrender 
+
+apt-get install libxrender-dev
+
+修改configure gcc 3.4 那增加当前gcc 版本
+
+    {命令行下g++ -dumpversion > 4，适用下列解决方法}：将下列代码中4*|3.4*)改为9*|8*|7*|6*|5*|4*|3.4*)
+
+                    case "$XPLATFORM" in         
+                         *-g++*)
+                                 case "$(${QMAKE_CONF_COMPILER} -dumpversion)" in  #QMAKE_CONF_COMPILER=`getXQMakeConf QMAKE_CXX`
+                                    4*|3.4*)
+                                          ;;
+                                      3.3*)
+                                       canBuildWebKit="no"
+                                       ;;
+                                        *)
+                                    canBuildWebKit="no"
+                                    canBuildQtXmlPatterns="no"
+                                      ;;
+
+openGL
+sudo apt-get install libgl1-mesa-dev
+
+/project/vnc_damo/vnc_unixsrc$ vi ./Xvnc/include/keysymdef.h

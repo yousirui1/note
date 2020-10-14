@@ -1,0 +1,62 @@
+　序列号: 03-50-023223
+
+　　密钥: ABMVSR NA46JN V3D2GG TJDKFQ ACS3S4 B18P54 ZPCQWM 9756P2
+
+FF31K-AHZD1-H8ETZ-8WWEZ-WUUVA
+
+./configure -release -nomake examples -no-iconv -no-opengl -no-assimp -no-qt3d-profile-jobs -no-qt3d-profile-gl -xplatform linux-arm-gnueabi-g++ -prefix /home/user/QtEnv/QtEmbedded-5.9.1-arm -opensource -confirm-license
+
+
+
+
+./configure -embedded arm -xplatform qws/linux-arm-g++ -depths 4,8,12,16 -no-qt3support -no-qvfb -qt-mouse-tslib -prefix /home/lhc/Qt/output/qt-arm/ -qt-sql-sqlite -I/home/lhc/Qt/output/tslib/include -L/home/lhc/Qt/output/tslib/lib -no-rpath -no-largefile
+
+
+
+
+ xmange 150131-116181-999502
+
+  setStyleSheet(
+                   //正常状态样式
+                   "QPushButton{"
+                   "background-color:rgba(100,225,100,30);"//背景色（也可以设置图片）
+                   "border-style:outset;"                  //边框样式（inset/outset）
+                   "border-width:4px;"                     //边框宽度像素
+                   "border-radius:10px;"                   //边框圆角半径像素
+                   "border-color:rgba(255,255,255,30);"    //边框颜色
+                   "font:bold 10px;"                       //字体，字体大小
+                   "color:rgba(0,0,0,100);"                //字体颜色
+                   "padding:6px;"                          //填衬
+                   "}"
+                   //鼠标按下样式
+                   "QPushButton:pressed{"
+                   "background-color:rgba(100,255,100,200);"
+                   "border-color:rgba(255,255,255,30);"
+                   "border-style:inset;"
+                   "color:rgba(0,0,0,100);"
+                   "}"
+                   //鼠标悬停样式
+                   "QPushButton:hover{"
+                   "background-color:rgba(100,255,100,100);"
+                   "border-color:rgba(255,255,255,200);"
+                   "color:rgba(0,0,0,200);"
+                   "}");
+
+				   
+				   windeployqt MyRfiddoor.exe
+				   
+				   
+make clean && make distclean
+rm -rf arm-linux.cache
+echo enable_malloc0returnsnull=yes>arm-linux.cache
+CC=/usr/local/arm-4.8.1/bin/arm-none-linux-gnueabi-gcc CXX=/usr/local/arm-4.8.1/bin/arm-none-linux-gnueabi-g++ ./configure --prefix=/home/work/DownLoad/libX11/ --disable-xf86bigfont --host=arm-linux --target=arm-linux  CFLAGS="-I/home/work/DownLoad/libX11/include -I/home/work/DownLoad/libX11/libxcb/include -L/home/work/DownLoad/libX11/lib -L/home/work/DownLoad/libX11/libxcb/lib" --includedir=/home/work/DownLoad/libX11/include XPROTO_LIBS=/home/work/DownLoad/libX11/lib --cache-file=arm-linux.cache
+make && make install
+
+
+
+ffmpeg -f x11grab    -s xga  -r 10 -i :0.0+100+200  -vcodec h264 rtsp://192.168.3.42:888
+
+
+_Z34QBasicAtomicInt_fetchAndAddOrderedPVii
+
+Xtightvnc :0 -desktop X -auth /home/ysr/.Xauthority -geometry 1280x720 -depth 16 -rfbwait 120000 -rfbauth /home/ysr/.vnc/passwd -rfbport 5900 -fp /usr/share/fonts/X11/misc/,/usr/share/fonts/X11/Type1/,/usr/share/fonts/X11/75dpi/,/usr/share/fonts/X11/100dpi/ -co /etc/X11/rgb -dpi 75 -httpd /usr/local/vnc/classes
