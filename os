@@ -1,5 +1,4 @@
 
-
 1.进入解压后的bochs源码目录，在终端下输入./configure --enable-disasm --enable-debugger意思是说我们编译时使bochs带有反汇编功能和调试器功能。
 2.然后出现了第一个错误:ERROR: X windows gui was selected, but X windows libraries were not found，使用sudo apt-get install libx11-dev来解决这个错
 误

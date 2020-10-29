@@ -31,6 +31,10 @@ subnet 192.168.4.0 netmask 255.255.255.0 {  # 定义子网
 `$ yum install xinetd tftp-server`
 `vi /etc/xinetd.d/tftp `
 
+`$ apt-get install tftpd-hpa`
+`$ vi /etc/default/tftpd-hap `
+ $ sudo service tftpd-hpa restart
+
 ```
 service tftp
 {
