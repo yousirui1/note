@@ -7,6 +7,7 @@ $ setenv bootargs "root=/dev/nfs rw nfsroot=192.169.27.221:/opt/t2,nolock ip=192
 # fdt addr 未设置时异常
 $ tftp 0x60000000 uImage; tftp 0x70000000 vexpress-v2p-ca9.dtb;fdt addr 0x70000000; bootm 0x60000000 - 0x70000000
 
+
 ## pi
 
 
