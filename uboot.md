@@ -8,13 +8,13 @@ $ setenv bootargs "root=/dev/nfs rw nfsroot=192.169.27.221:/opt/t2,nolock ip=192
 $ tftp 0x60000000 uImage; tftp 0x70000000 vexpress-v2p-ca9.dtb;fdt addr 0x70000000; bootm 0x60000000 - 0x70000000
 
 
-## pi
+## s905
 $ setenv ipaddr 192.168.1.20; setenv serverip 192.168.1.7
 $ setenv bootargs "root=/dev/nfs rw nfsroot=192.168.1.7:/opt/t2,nolock ip=192.168.1.20 console=ttyS0,115200 console=tty0 init=/sbin/init"
 $ tftp 0x01100000 Image; tftp 0x1000000 dtb.img;fdt addr 0x1000000; booti 0x01100000 - 0x1000000
 
 
-## s905
+## pi
 
 
 
